@@ -1,0 +1,250 @@
+import heapq
+import time
+
+class CityMap:
+    def __init__(self):
+        self.vertices = {}
+        self.edges = {}
+        self.traffic_lights = set()
+
+    def add_vertex(self, vertex, location=None):
+        self.vertices[vertex] = location
+
+    def remove_vertex(self, vertex):
+        del self.vertices[vertex]
+        self.edges = {k: v for k, v in self.edges.items() if vertex not in k}
+
+    def add_edge(self, start_vertex, end_vertex, weight, additional_info=None):
+        if start_vertex not in self.vertices or end_vertex not in self.vertices:
+            raise ValueError("Start or end vertex does not exist in the map.")
+        self.edges[(start_vertex, end_vertex)] = {'weight': weight, 'info': additional_info}
+
+    def remove_edge(self, start_vertex, end_vertex):
+        del self.edges[(start_vertex, end_vertex)]
+
+    def get_vertices(self):
+        return list(self.vertices.keys())
+
+    def get_edges(self):
+        return list(self.edges.keys())
+
+    def get_vertex_location(self, vertex):
+        return self.vertices[vertex]
+
+    def add_traffic_light(self, vertex):
+        self.traffic_lights.add(vertex)
+
+    def remove_traffic_light(self, vertex):
+        self.traffic_lights.discard(vertex)
+
+    def has_traffic_light(self, vertex):
+        return vertex in self.traffic_lights
+
+    def get_edge_weight(self, start_vertex, end_vertex):
+        return self.edges[(start_vertex, end_vertex)]['weight']
+
+    def get_edge_info(self, start_vertex, end_vertex):
+        return self.edges[(start_vertex, end_vertex)]['info']
+
+    def get_neighbors(self, vertex):
+        neighbors = []
+        for (start_vertex, end_vertex) in self.edges.keys():
+            if start_vertex == vertex:
+                neighbors.append(end_vertex)
+        return neighbors
+
+
+map1 = CityMap()
+
+map1.add_vertex('A', {'x': 5, 'y': 10})
+map1.add_vertex('B', {'x': 20, 'y': 5})
+map1.add_vertex('C', {'x': 50, 'y': 5})
+map1.add_vertex('D', {'x': 60, 'y':25})
+map1.add_vertex('E', {'x': 65, 'y':30})
+map1.add_vertex('F', {'x': 80, 'y':30})
+map1.add_vertex('G', {'x': 100, 'y':40})
+map1.add_vertex('H', {'x': 135, 'y':100})
+map1.add_vertex('I', {'x': 150, 'y':250})
+map1.add_vertex('K', {'x': 180, 'y':250})
+map1.add_vertex('L', {'x': 200, 'y':200})
+map1.add_vertex('M', {'x': 250, 'y':250})
+
+map1.add_edge('A', 'B', 10)
+map1.add_edge('B', 'A', 12)
+map1.add_edge('A', 'C', 20)
+map1.add_edge('B', 'C', 15)
+map1.add_edge('B', 'E', 50)
+map1.add_edge('E', 'B', 45)
+map1.add_edge('C', 'B', 5)
+map1.add_edge('C', 'A', 100)
+map1.add_edge('D', 'C', 20)
+map1.add_edge('D', 'E', 10)
+map1.add_edge('F', 'E', 40)
+map1.add_edge('E', 'F', 60)
+map1.add_edge('E', 'I', 120)
+map1.add_edge('I', 'E', 180)
+map1.add_edge('F', 'E', 5)
+map1.add_edge('G', 'F', 80)
+map1.add_edge('F', 'G', 65)
+map1.add_edge('F', 'M', 100)
+map1.add_edge('M', 'F', 100)
+map1.add_edge('H', 'G', 10)
+map1.add_edge('H', 'I', 30)
+map1.add_edge('I', 'H', 30)
+map1.add_edge('H', 'K', 40)
+map1.add_edge('K', 'H', 45)
+map1.add_edge('K', 'I', 100)
+map1.add_edge('L', 'K', 25)
+map1.add_edge('K', 'L', 25)
+map1.add_edge('A', 'K', 20)
+map1.add_edge('L', 'C', 200)
+map1.add_edge('C', 'L', 250)
+map1.add_edge('M', 'L', 20)
+map1.add_edge('M', 'A', 50)
+map1.add_edge('A', 'M', 20)
+
+print(map1.get_vertices())
+print(map1.get_edges())
+print(map1.get_neighbors('A'))
+print(map1.get_neighbors('K'))
+print(map1.get_neighbors('F'))
+
+class CarNavigation:
+    def __init__(self, city_map):
+        self.city_map = city_map
+        self.start_vertex = None
+        self.destination = None
+        self.path = []
+        self.current_position = None
+
+    def set_initial_position(self, start_vertex):
+        if start_vertex not in self.city_map.get_vertices():
+            raise ValueError("Invalid start vertex.")
+        self.start_vertex = start_vertex
+        self.current_position = start_vertex
+
+    def set_destination(self, destination):
+        if destination not in self.city_map.get_vertices():
+            raise ValueError("Invalid destination vertex.")
+        self.destination = destination
+
+    def dijkstra(self):
+        if not self.start_vertex or not self.destination:
+            raise ValueError("Start vertex or destination not set.")
+
+        distances = {vertex: float('inf') for vertex in self.city_map.get_vertices()}
+        distances[self.start_vertex] = 0
+
+        previous_vertices = {vertex: None for vertex in self.city_map.get_vertices()}
+
+        queue = [(0, self.start_vertex)]
+
+        while queue:
+            current_distance, current_vertex = heapq.heappop(queue)
+
+            if current_vertex == self.destination:
+                break
+
+            if current_distance > distances[current_vertex]:
+                continue
+
+            for neighbor in self.city_map.get_neighbors(current_vertex):
+                weight = self.city_map.get_edge_weight(current_vertex, neighbor)
+                if self.is_traffic_blocked(current_vertex, neighbor):
+                    weight += 1  # Add a penalty for traffic
+                distance = current_distance + weight
+
+                if distance < distances[neighbor]:
+                    distances[neighbor] = distance
+                    previous_vertices[neighbor] = current_vertex
+                    heapq.heappush(queue, (distance, neighbor))
+
+        self.path = self._build_path(previous_vertices)
+
+    def is_traffic_blocked(self, current_vertex, neighbor):
+        # check if there is a car in front or traffic from the right
+        # 1 step distance from car 
+        current_location = self.city_map.get_vertex_location(current_vertex)
+        neighbor_location = self.city_map.get_vertex_location(neighbor)
+        distance = self.city_map.get_edge_weight(current_vertex, neighbor)
+        # add a buffer distance for also car check
+        buffer_distance = 4
+        for vertex in self.city_map.get_vertices():
+            if vertex == current_vertex or vertex == neighbor:
+                continue
+            vertex_location = self.city_map.get_vertex_location(vertex)
+            if self._is_car_in_front(current_location, neighbor_location, vertex_location, distance + buffer_distance):
+                return True
+            if self._is_car_coming_from_right(current_location, neighbor_location, vertex_location, distance + buffer_distance):
+                return True
+        return False
+
+    def _is_car_in_front(self, current_location, neighbor_location, vertex_location, distance_threshold):
+        # check if there is a car in front within the distance threshold
+        # considered to be within distance_threshold if the vertex is located between the current and neighbor vertices
+        x1, y1 = current_location['x'], current_location['y']
+        x2, y2 = neighbor_location['x'], neighbor_location['y']
+        x3, y3 = vertex_location['x'], vertex_location['y']
+        # calculate the cross product to check if the vertex is between the current and neighbor vertices
+        cross_product = (x3 - x1) * (y2 - y1) - (x2 - x1) * (y3 - y1)
+        if cross_product == 0:
+            # collinear points, check if the vertex is within the segment
+            if min(x1, x2) <= x3 <= max(x1, x2) and min(y1, y2) <= y3 <= max(y1, y2):
+                distance = abs(cross_product) / (x2 - x1)
+                if distance <= distance_threshold:
+                    return True
+        return False
+
+    def _is_car_coming_from_right(self, current_location, neighbor_location, vertex_location, distance_threshold):
+        # check if there is a car coming from the right within the distance threshold
+        # considered to be within distance_threshold if the vertex is located to the right of the line segment
+        x1, y1 = current_location['x'], current_location['y']
+        x2, y2 = neighbor_location['x'], neighbor_location['y']
+        x3, y3 = vertex_location['x'], vertex_location['y']
+        # calculate the cross product to check if the vertex is on the right side of the line segment
+        cross_product = (x3 - x1) * (y2 - y1) - (x2 - x1) * (y3 - y1)
+        if cross_product > 0:
+            distance = cross_product / (x2 - x1)
+            if distance <= distance_threshold:
+                return True
+        return False
+
+    def _build_path(self, previous_vertices):
+        path = []
+        vertex = self.destination
+        while vertex is not None:
+            path.insert(0, vertex)
+            vertex = previous_vertices[vertex]
+        return path
+
+    def calculate_total_distance(self):
+        total_distance = 0
+        for i in range(len(self.path) - 1):
+            start_vertex = self.path[i]
+            end_vertex = self.path[i + 1]
+            distance = self.city_map.get_edge_weight(start_vertex, end_vertex)
+            total_distance += distance
+        return total_distance
+
+    def get_path(self):
+        return self.path
+
+    def get_current_position(self):
+        return self.current_position
+
+    def get_destination(self):
+        return self.destination
+
+car_nav = CarNavigation(map1)
+car_nav.set_initial_position('A')
+car_nav.set_destination('M')
+car_nav.dijkstra()
+
+path = car_nav.get_path()
+print("Path:", path)
+print("Total Distance:", car_nav.calculate_total_distance())
+
+#this for steps
+for i, vertex in enumerate(path):
+    print("Current Position:", vertex)
+    time.sleep(1)
