@@ -95,3 +95,5 @@ print(map1.get_edges())
 #Gives back all the edges, without showing the weights
 print(map1.get_edge_weight(1,4))
 #Gives back the edge weight of a specific edge
+
+# Remark just to show how git works...
