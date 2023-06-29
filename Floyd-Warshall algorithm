@@ -1,0 +1,100 @@
+{
+ "cells": [
+  {
+   "cell_type": "code",
+   "execution_count": 1,
+   "id": "bf0036c4-d26f-4590-884f-49360cdd25bf",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "import random\n",
+    "import math\n",
+    "\n",
+    "class CityMap:\n",
+    "    def __init__(self):\n",
+    "        self.vertices = {}\n",
+    "        self.edges = {}\n",
+    "        self.traffic_lights = set()\n",
+    "\n",
+    "    # ... (Rest of the CityMap class code)\n",
+    "\n",
+    "    def floyd_warshall(self):\n",
+    "        # Initialize distance matrix\n",
+    "        num_vertices = len(self.vertices)\n",
+    "        distances = [[math.inf] * num_vertices for _ in range(num_vertices)]\n",
+    "        \n",
+    "        # Populate distance matrix with edge weights\n",
+    "        for (start_vertex, end_vertex), edge_data in self.edges.items():\n",
+    "            start_index = self.get_vertex_index(start_vertex)\n",
+    "            end_index = self.get_vertex_index(end_vertex)\n",
+    "            distances[start_index][end_index] = edge_data['weight']\n",
+    "\n",
+    "        # Set diagonal elements to 0 (distance to self)\n",
+    "        for i in range(num_vertices):\n",
+    "            distances[i][i] = 0\n",
+    "\n",
+    "        # Floyd-Warshall algorithm\n",
+    "        for k in range(num_vertices):\n",
+    "            for i in range(num_vertices):\n",
+    "                for j in range(num_vertices):\n",
+    "                    distances[i][j] = min(distances[i][j], distances[i][k] + distances[k][j])\n",
+    "\n",
+    "        return distances\n",
+    "\n",
+    "    def get_vertex_index(self, vertex):\n",
+    "        return list(self.vertices.keys()).index(vertex)\n",
+    "\n",
+    "# ... (Rest of the code remains the same)\n",
+    "\n",
+    "map1 = CityMap()\n",
+    "# ... (Rest of the map initialization code)\n",
+    "\n",
+    "distances = map1.floyd_warshall()\n",
+    "\n",
+    "# Print the distance matrix\n",
+    "for i, row in enumerate(distances):\n",
+    "    for j, distance in enumerate(row):\n",
+    "        print(f\"Distance from {map1.get_vertices()[i]} to {map1.get_vertices()[j]}: {distance}\")\n",
+    "\n"
+   ]
+  },
+  {
+   "cell_type": "code",
+   "execution_count": null,
+   "id": "6b981e91-bedd-42b8-88aa-66c599fd5a9d",
+   "metadata": {},
+   "outputs": [],
+   "source": [
+    "['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M']\n",
+    "[('A', 'B'), ('A', 'C'), ('A', 'D'), ('A', 'E'), ('A', 'F'), ('A', 'G'), ('A', 'H'), ('A', 'I'), ('A', 'K'), ('A', 'L'), ('A', 'M'), ('B', 'A'), ('B', 'C'), ('B', 'D'), ('B', 'E'), ('B', 'F'), ('B', 'G'), ('B', 'H'), ('B', 'I'), ('B', 'K'), ('B', 'L'),...]\n",
+    "\n",
+    "Weight from 'F' to 'E': 46\n",
+    "\n",
+    "Neighbors of 'A': ['B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'K', 'L', 'M']\n",
+    "Neighbors of 'K': ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'L', 'M']\n",
+    "Neighbors of 'F': ['A', 'B', 'C', 'D', 'E', 'G', 'H', 'I', 'K', 'L', 'M']\n"
+   ]
+  }
+ ],
+ "metadata": {
+  "kernelspec": {
+   "display_name": "anaconda-panel-2023.05-py310",
+   "language": "python",
+   "name": "conda-env-anaconda-panel-2023.05-py310-py"
+  },
+  "language_info": {
+   "codemirror_mode": {
+    "name": "ipython",
+    "version": 3
+   },
+   "file_extension": ".py",
+   "mimetype": "text/x-python",
+   "name": "python",
+   "nbconvert_exporter": "python",
+   "pygments_lexer": "ipython3",
+   "version": "3.11.3"
+  }
+ },
+ "nbformat": 4,
+ "nbformat_minor": 5
+}
